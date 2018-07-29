@@ -6,14 +6,18 @@ use std::sync::mpsc;
 mod command;
 mod executor;
 mod cli;
+mod player;
 
 
 pub fn run() {
     let (sender, receiver) = mpsc::channel();
     let c = cli::CLI::new(sender);
-    let e = executor::Executor::new(receiver);
     spawn(move || c.run());
-    let e_handle = spawn(move || e.run());
+    let e_handle = spawn(move || {
+        let player = player::Player::new().expect("Failed to load player!");
+        let mut e = executor::Executor::new(receiver, player);
+        e.run()
+    });
     e_handle.join();
 }
 
